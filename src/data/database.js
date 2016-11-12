@@ -9,7 +9,7 @@ export class Database {
         let Db = new tingoDb().Db;
         let db = new Db('./db', {});
 
-        this.Users = db.collection('users');
-        this.AccessTokens = db.collection('accessTokens');
+        this.Users = db.collection('users.json');
+        this.AccessTokens = db.collection('accessTokens.json');
     }
 }
