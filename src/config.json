@@ -1,5 +1,6 @@
 {
 	"port": 8080,
+	"serverSecret": "serverSecret",
 	"bodyLimit": "100kb",
 	"corsHeaders": ["Link"],
 	"security": {

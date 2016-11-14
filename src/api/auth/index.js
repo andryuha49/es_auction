@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import auth from './auth';
+import {AuthApi} from './authApi';
 
 export default ({ config, db }) => {
     let router = Router();
 
     // mount the facets resource
-    router.use('/auth', auth({ config, db }));
+    router.use('/auth', new AuthApi({ config, db }));
 
     return router;
 }
