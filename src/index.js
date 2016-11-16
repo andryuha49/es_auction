@@ -27,7 +27,7 @@ app.use(passport.initialize());
 
 // connect to db
 initializeDb( db => {
-	db = new Database();
+	db = new Database(config.tingoDb);
 
 	// internal middleware
 	app.use(middleware({ config, db }));

@@ -5,9 +5,9 @@ export class Database {
     Users = [];
     AccessTokens = [];
 
-    constructor() {
+    constructor(config) {
         let Db = new tingoDb().Db;
-        let db = new Db('./db', {});
+        let db = new Db(config.path, {});
 
         this.Users = db.collection('users.json');
         this.AccessTokens = db.collection('accessTokens.json');

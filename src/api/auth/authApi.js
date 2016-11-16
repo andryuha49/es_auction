@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import {Crypto} from '../../lib/crypto';
 import {ValidateModelsService} from './services/validateModelsService';
 import {UserViewModel} from './models/userViewModel';
-
+import nodemailer from 'nodemailer';
 
 let _router = null;
 let _config = null;
@@ -15,6 +15,15 @@ let _crypto = null;
 
 let getPasswordHash = (password) => {
     return _crypto.sha512(password, _config.serverSecret);
+};
+
+let generatePassword = (length = 8) => {
+    let charset = 'abdefghijklmnpqrstuvwxyzABDEFGHIJKLMNPQRSTUVWXYZ123456789',
+        retVal = '';
+    for (var i = 0, n = charset.length; i < length; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return retVal;
 };
 
 export class AuthApi {
@@ -31,7 +40,9 @@ export class AuthApi {
     bind() {
         _router.post('/login', this.login);
         _router.post('/register', this.register);
+        _router.post('/restorePassword', this.restorePassword);
         _router.get('/userInfo', passport.authenticate('bearer', {session: false}), this.userInfo);
+
         return _router;
     }
 
@@ -104,14 +115,27 @@ export class AuthApi {
         }
     }
 
-    restorePassword(req, res){
+    restorePassword(req, res) {
         let email = req.body.email;
-        if(!email){
+        if (!email) {
             res.status(500).json({errorMessage: 'Email is required'});
-        } else {
-            
-        }
+        } else
+            _db.Users.findOne({email: email}, function (err, user) {
+                if (err !== null) {
+                    res.status(500).json(err);
+                } else if (user == null) {
+                    res.status(404).json({errorMessage: 'User not found'});
+                } else {
+                    let newPassword = this::generatePassword();
+                    user.passwordHash = getPasswordHash(newPassword);
+                    console.log(newPassword);
+                    _db.Users.update({login:user.login}, user,{ upsert: false });
+
+                    res.status(200).json({test:'test'});
+                }
+            });
     }
+
 
     userInfo(req, res) {
         res.status(200).json(new UserViewModel(req.user));
