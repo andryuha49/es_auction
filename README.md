@@ -26,6 +26,4 @@ Configure SMTP in config.json in section "smtp"
 	}
 ```
 
-``` 
 note: For Gmail you may need to configure "Allow Less Secure Apps" in your Gmail account. [Click Here.](https://www.google.com/settings/security/lesssecureapps)
-```
