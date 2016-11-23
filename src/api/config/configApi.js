@@ -1,5 +1,4 @@
 import bearerAuthorize from '../../lib/authorization/bearerAuthorize';
-//import {ConfigItem} from './models/configItem';
 
 let _router = null;
 let _config = null;
@@ -18,7 +17,7 @@ export class ConfigApi{
         _router.get('/:key', bearerAuthorize(['admin']), this.get);
         _router.post('/:key', bearerAuthorize(['admin']), this.post);
         _router.put('/:key', bearerAuthorize(['admin']), this.put);
-        _router.delete('/:key', bearerAuthorize(['admin']), this.remove);
+        _router.delete('/:key', bearerAuthorize(['admin']), this.delete);
         _router.put('/reset/:key', bearerAuthorize(['admin']), this.reset);
 
         return _router;
@@ -82,7 +81,7 @@ export class ConfigApi{
         });
     }
 
-    remove(req, res) {
+    delete(req, res) {
         _db.Config.findAndRemove({key: req.params.key},function (err, data) {
             if (err){
                 res.status(500).json(err);

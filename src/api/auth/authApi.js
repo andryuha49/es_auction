@@ -13,8 +13,8 @@ let _db = null;
 let _validateService = null;
 let _crypto = null;
 
-let getPasswordHash = (password) => {
-    return _crypto.sha512(password, _config.serverSecret);
+let getPasswordHash = (password, salt) => {
+    return _crypto.sha512(password, salt || _config.serverSecret);
 };
 
 let generatePassword = (length = 8) => {
@@ -160,29 +160,34 @@ export class AuthApi {
                     res.status(404).json({errorMessage: 'User not found'});
                 } else {
                     let newPassword = this::generatePassword();
-                    user.passwordHash = getPasswordHash(newPassword);
-                    console.log(newPassword);
-                    _db.Users.update({login:user.login}, user,{ upsert: false });
+                    user.passwordHash = this::getPasswordHash(newPassword, user.login);
+                    _db.Users.update({login:user.login}, user,{ upsert: false }, function(err) {
+                        if (err !== null) {
+                            res.status(500).json(err);
+                        } else {
 
-                    let transporter = nodemailer.createTransport(_config.smtp);
+                            let transporter = nodemailer.createTransport(_config.smtp);
 
-                    var mailOptions = {
-                        from: '"es auction" <noreplay.' + _config.smtp.sender + '>', // sender address
-                        to: user.email, //'andryuha49@windowslive.com', // list of receivers
-                        subject: 'ES AUCTION: restore password', // Subject line
-                        text: 'Hello world 🐴', // plaintext body
-                        html: 'Hello!<br>You have new login password: <b>' + newPassword + '</b> .' // html body
-                    };
+                            var mailOptions = {
+                                from: '"es auction" <noreplay.' + _config.smtp.sender + '>', // sender address
+                                to: user.email, // list of receivers
+                                subject: 'ES AUCTION: restore password', // Subject line
+                                text: 'Hello world 🐴', // plaintext body
+                                html: 'Hello!<br>You have new login password: <b>' + newPassword + '</b> .' // html body
+                            };
 
-                    // send mail with defined transport object
-                    transporter.sendMail(mailOptions, function(error, info){
-                        if(error){
-                            return console.log(error);
+                            // send mail with defined transport object
+                            transporter.sendMail(mailOptions, function(error, info){
+                                if(error){
+                                    return console.log(error);
+                                }
+                                console.log('Message sent: ' + user.email + ' ' + info.response);
+                            });
+
+                            res.status(200).json({message: 'New password was sent on email'});
                         }
-                        console.log('Message sent: ' +  + ' ' + info.response);
                     });
 
-                    res.status(200).json({test:'test'});
                 }
             });
     }

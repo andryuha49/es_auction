@@ -8,6 +8,8 @@ import facets from './facets';
 
 import {AuthApi} from './auth/authApi';
 import {ConfigApi} from './config/configApi';
+import {ProfileApi} from './user/profileApi';
+import {AddressApi} from './user/addressApi';
 
 let getJwtStrategy = function (config, db) {
     return function (accessToken, done) {
@@ -53,6 +55,9 @@ export default ({config, db}) => {
 
     router.use('/config', new ConfigApi(config, db, new Router()).bind());
 
+    router.use('/user/profile', new ProfileApi(config, db, new Router()).bind());
+
+    router.use('/user/address', new AddressApi(config, db, new Router()).bind());
     // perhaps expose some API metadata at the root
     router.get('/', (req, res) => {
         res.json({version});
