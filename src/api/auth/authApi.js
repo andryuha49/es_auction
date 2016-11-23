@@ -1,7 +1,7 @@
 import {Router} from 'express';
-import passport from 'passport';
 import jwt from 'jsonwebtoken';
 
+import bearerAuthorize from '../../lib/authorization/bearerAuthorize';
 import {Crypto} from '../../lib/crypto';
 import {ValidateModelsService} from './services/validateModelsService';
 import {UserViewModel} from './models/userViewModel';
@@ -26,6 +26,18 @@ let generatePassword = (length = 8) => {
     return retVal;
 };
 
+let getToken = function(request) {
+    let authorization = request.headers.authorization;
+    if (authorization) {
+        return authorization.split(' ')[1];
+    }
+
+    if (request.query && request.query.access_token) {
+        return request.query.access_token;
+    }
+    return null;
+};
+
 export class AuthApi {
 
     constructor(config, db, router) {
@@ -39,9 +51,10 @@ export class AuthApi {
 
     bind() {
         _router.post('/login', this.login);
+        _router.get('/logout', bearerAuthorize(), this.logout);
         _router.post('/register', this.register);
         _router.post('/restorePassword', this.restorePassword);
-        _router.get('/userInfo', passport.authenticate('bearer', {session: false}), this.userInfo);
+        _router.get('/userInfo', bearerAuthorize(), this.userInfo);
 
         return _router;
     }
@@ -77,7 +90,12 @@ export class AuthApi {
                                 if (err !== null) {
                                     res.status(500).json(err);
                                 } else {
-                                    res.status(200).json({access_token: token});
+                                    res.status(200).json({
+                                        access_token: token,
+                                        token_type: 'bearer',
+                                        expires_in: _config.security.tokenLife,
+                                        created_date: date
+                                    });
                                 }
                             }
                         );
@@ -85,6 +103,17 @@ export class AuthApi {
                 }
             });
         }
+    }
+
+    logout(req, res) {
+        let token = this::getToken(req);
+        _db.AccessTokens.remove({token: token}, function (err) {
+            if (err) {
+                res.status(500).json(err);
+            } else {
+                res.status(200).end();
+            }
+        });
     }
 
     register(req, res) {
@@ -103,6 +132,10 @@ export class AuthApi {
                     registerModel.password = null;
                     registerModel.createdDate = Date.now();
                     registerModel.isLocked = false;
+                    if(registerModel.login.toLowerCase() === 'admin') {
+                        registerModel.roles = ['admin'];
+                    }
+
                     _db.Users.insert(registerModel, {w: 1}, function (err, result) {
                         if (err !== null) {
                             res.status(500).json(err);
@@ -130,6 +163,24 @@ export class AuthApi {
                     user.passwordHash = getPasswordHash(newPassword);
                     console.log(newPassword);
                     _db.Users.update({login:user.login}, user,{ upsert: false });
+
+                    let transporter = nodemailer.createTransport(_config.smtp);
+
+                    var mailOptions = {
+                        from: '"es auction" <noreplay.' + _config.smtp.sender + '>', // sender address
+                        to: user.email, //'andryuha49@windowslive.com', // list of receivers
+                        subject: 'ES AUCTION: restore password', // Subject line
+                        text: 'Hello world 🐴', // plaintext body
+                        html: 'Hello!<br>You have new login password: <b>' + newPassword + '</b> .' // html body
+                    };
+
+                    // send mail with defined transport object
+                    transporter.sendMail(mailOptions, function(error, info){
+                        if(error){
+                            return console.log(error);
+                        }
+                        console.log('Message sent: ' +  + ' ' + info.response);
+                    });
 
                     res.status(200).json({test:'test'});
                 }

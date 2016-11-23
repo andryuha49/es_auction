@@ -49,3 +49,5 @@ jspm_packages
 .yarn-integrity
 
 db/*.json
+
+config_private.json

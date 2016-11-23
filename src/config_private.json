@@ -15,8 +15,8 @@
 		"port": 465,
 		"secure": true,
 		"auth": {
-			"user": "user@gmail.com",
-			"pass": "password"
+			"user": "es.auction2016@gmail.com",
+			"pass": "Qwerty12"
 		}
 	}
 }

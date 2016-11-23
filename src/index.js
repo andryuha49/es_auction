@@ -25,9 +25,20 @@ app.use(bodyParser.json({
 
 app.use(passport.initialize());
 
+
+let mapConfig = function(defaultConfig, db) {
+	db.Config.findOne({key: 'smtp'}, function(err, smtp){
+		if(!err && smtp !== null) {
+			defaultConfig.smtp = smtp.value;
+		}
+	});
+};
+
 // connect to db
 initializeDb( db => {
 	db = new Database(config.tingoDb);
+
+	mapConfig(config, db);
 
 	// internal middleware
 	app.use(middleware({ config, db }));
