@@ -50,4 +50,4 @@ jspm_packages
 
 db/*.json
 
-config_private.json
+src/config_private.json
